@@ -3,11 +3,9 @@ import subprocess
 import sys
 import os
 
-# Універсальне визначення папки
-try:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    BASE_DIR = os.getcwd()
+# ВСТАНОВЛЮЄМО ШЛЯХ ДО ПАПКИ З ІГРАМИ
+# Використовуємо r"" (raw string), щоб Windows правильно сприймав зворотні слеші
+BASE_DIR = r"C:\Users\Logika\Desktop\LogikLauncher-main\game"
 
 pygame.init()
 
@@ -30,12 +28,11 @@ COLORS = {
 font_title = pygame.font.SysFont('Verdana', 50, bold=True)
 font_btn = pygame.font.SysFont('Verdana', 22)
 
-# ✅ ВИПРАВЛЕНІ ШЛЯХИ
+# Список ігор (шляхи відносно папки BASE_DIR)
 games_list = [
     ("Пінг-Понг (Онлайн)", "ping-pong/client.py", COLORS["blue"]),
-    ("Flappy Bird (Голос)", "Flappybird/Flappy_Bird_sound.py", COLORS["green"]),
-    ("Flappy Bird (Класика)", "Flappybird/Flappy_Bird_base.py", COLORS["orange"]),
-    ("Арканоїд", "arkanoid/arkanoid3.py", COLORS["red"])
+    ("Flappy Bird (Класика)", "Flappybird/Flappy Bird (base).py", COLORS["orange"]),
+    ("Арканоїд", "arkanoid/арканоїд-3.py", COLORS["red"])
 ]
 
 def draw_button(text, rect, color, is_hovered):
@@ -48,27 +45,30 @@ def draw_button(text, rect, color, is_hovered):
     screen.blit(txt_surface, txt_rect)
 
 def run_game(file_name):
-    file_path = os.path.join(BASE_DIR, file_name)
+    # Тепер file_path будується відносно C:\Users\Logika\Desktop\LogikLauncher-main\game
+    file_path = os.path.normpath(os.path.join(BASE_DIR, file_name))
+    game_folder = os.path.dirname(file_path) # Папка конкретної гри
 
     if not os.path.exists(file_path):
-        print(f"Помилка: Файл не знайдено → {file_path}")
+        print(f"Помилка: Файл не знайдено за шляхом: {file_path}")
         return
 
     try:
-        # ✅ запуск сервера для пінг-понга
+        # ✅ Спеціальна логіка для Пінг-Понга (запуск сервера)
         if "ping-pong/client.py" in file_name:
-            server_path = os.path.join(BASE_DIR, "ping-pong/server.py")
+            server_path = os.path.join(game_folder, "server.py")
             if os.path.exists(server_path):
                 print("Запуск сервера...")
-                subprocess.Popen([sys.executable, server_path], cwd=BASE_DIR)
+                subprocess.Popen([sys.executable, server_path], cwd=game_folder)
 
         print(f"Запуск гри: {file_name}")
-        subprocess.Popen([sys.executable, file_path], cwd=BASE_DIR)
+        # Запускаємо гру, вказуючи її власну папку як робочу (cwd)
+        subprocess.Popen([sys.executable, file_path], cwd=game_folder)
 
     except Exception as e:
         print(f"Помилка запуску: {e}")
 
-# Кнопки
+# Створення кнопок
 button_rects = []
 for i in range(len(games_list)):
     rect = pygame.Rect(WIDTH//2 - 160, 130 + i * 80, 320, 60)
